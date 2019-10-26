@@ -34,6 +34,11 @@ class LuaSettings : PersistentStateComponent<LuaSettings> {
     //自定义require函数，参考constructorNames
     var importerNames: Array<String> = arrayOf("require")
 
+    // Path separator to use in importer functions.
+    // You may use '/' as an alternative to '.' to accomodate dots in filenames,
+    // although executing the code requires a patched Lua distribution.
+    var importPathSeparator: String = "."
+
     var constructorNames: Array<String> = arrayOf("new", "get")
 
     //Doc文档严格模式，对不合法的注解报错

@@ -57,6 +57,7 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
     private JComboBox<String> defaultCharset;
     private JComboBox<LuaLanguageLevel> languageLevel;
     private JTextField importerNames;
+    private JComboBox<String> importPathSeparator;
     private JTextField tooLargerFileThreshold;
 
     public LuaSettingsPanel(LuaSettings settings) {
@@ -71,6 +72,8 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
         additionalRoots.setRoots(settings.getAdditionalSourcesRoot());
         enableGenericCheckBox.setSelected(settings.getEnableGeneric());
         importerNames.setText(settings.getImporterNamesString());
+        importPathSeparator.setModel(new DefaultComboBoxModel<>(new String[]{".", "/"}));
+        importPathSeparator.setSelectedItem(settings.getImportPathSeparator());
         tooLargerFileThreshold.setDocument(new IntegerDocument());
         tooLargerFileThreshold.setText(String.valueOf(settings.getTooLargerFileThreshold()));
 
@@ -110,6 +113,7 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
     public boolean isModified() {
         return !StringUtil.equals(settings.getConstructorNamesString(), constructorNames.getText()) ||
                 !StringUtil.equals(settings.getImporterNamesString(), importerNames.getText()) ||
+                settings.getImportPathSeparator() != importPathSeparator.getSelectedItem() ||
                 settings.getTooLargerFileThreshold() != getTooLargerFileThreshold() ||
                 settings.isStrictDoc() != strictDoc.isSelected() ||
                 settings.isSmartCloseEnd() != smartCloseEnd.isSelected() ||
@@ -131,6 +135,7 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
         constructorNames.setText(settings.getConstructorNamesString());
         settings.setImporterNamesString(importerNames.getText());
         importerNames.setText(settings.getImporterNamesString());
+        settings.setImportPathSeparator((String) Objects.requireNonNull(importPathSeparator.getSelectedItem()));
         settings.setTooLargerFileThreshold(getTooLargerFileThreshold());
         settings.setStrictDoc(strictDoc.isSelected());
         settings.setSmartCloseEnd(smartCloseEnd.isSelected());

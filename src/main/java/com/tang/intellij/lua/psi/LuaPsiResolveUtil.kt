@@ -22,6 +22,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.tang.intellij.lua.Constants
+import com.tang.intellij.lua.project.LuaSettings
 import com.tang.intellij.lua.search.SearchContext
 import com.tang.intellij.lua.stubs.index.LuaClassMemberIndex
 
@@ -173,7 +174,10 @@ fun resolve(indexExpr: LuaIndexExpr, idString: String, context: SearchContext): 
 fun resolveRequireFile(pathString: String?, project: Project): LuaPsiFile? {
     if (pathString == null)
         return null
-    val fileName = pathString.replace('.', '/')
+    val fileName = when (LuaSettings.instance.importPathSeparator) {
+        "."  -> pathString.replace('.', '/')
+        else -> pathString
+    }
     val f = LuaFileUtil.findFile(project, fileName)
     if (f != null) {
         val psiFile = PsiManager.getInstance(project).findFile(f)

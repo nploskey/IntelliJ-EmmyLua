@@ -22,9 +22,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.sanitizeFileName
 import com.tang.intellij.lua.lang.LuaFileType
 import com.tang.intellij.lua.lang.LuaIcons
 import com.tang.intellij.lua.lang.type.LuaString
+import com.tang.intellij.lua.project.LuaSettings
 import com.tang.intellij.lua.project.LuaSourceRootManager
 
 /**
@@ -39,8 +41,10 @@ class RequirePathCompletionProvider : LuaCompletionProvider() {
         val cur = file.findElementAt(completionParameters.offset - 1)
         if (cur != null) {
             val ls = LuaString.getContent(cur.text)
-            val content = ls.value.replace('/', PATH_SPLITTER) //统一用.来处理，aaa.bbb.ccc
-
+            val content = when (LuaSettings.instance.importPathSeparator) {
+                "."  -> ls.value.replace('/', '.')
+                else -> ls.value
+            }
             val resultSet = completionResultSet.withPrefixMatcher(content)
             addAllFiles(completionParameters, resultSet)
         }
@@ -56,16 +60,22 @@ class RequirePathCompletionProvider : LuaCompletionProvider() {
         }
     }
 
-    private fun addAllFiles(project: Project, completionResultSet: CompletionResultSet, pck: String?, children: Array<VirtualFile>) {
+    private fun addAllFiles(project: Project, completionResultSet: CompletionResultSet, importPath: String?, children: Array<VirtualFile>) {
+        val sep = LuaSettings.instance.importPathSeparator
+
         for (child in children) {
             if (!LuaSourceRootManager.getInstance(project).isInSource(child))
                 continue
 
-            val fileName = FileUtil.getNameWithoutExtension(child.name)
-            val newPath = if (pck == null) fileName else "$pck.$fileName"
+            val isDir = child.isDirectory
+            var fileName = if (isDir) child.name else FileUtil.getNameWithoutExtension(child.name)
+            if (sep == ".") {
+                // Insert warning indicators if the filename contains dots.
+                fileName = fileName.replace('.', '!')
+            }
+            val newPath = if (importPath == null) fileName else "$importPath$sep$fileName"
 
-            if (child.isDirectory) {
-
+            if (isDir) {
                 addAllFiles(project, completionResultSet, newPath, child.children)
             } else if (child.fileType === LuaFileType.INSTANCE) {
                 val lookupElement = LookupElementBuilder
@@ -75,6 +85,15 @@ class RequirePathCompletionProvider : LuaCompletionProvider() {
                 completionResultSet.addElement(PrioritizedLookupElement.withPriority(lookupElement, 1.0))
             }
         }
+    }
+
+    private fun newChildImportPath(importPath: String?, child: VirtualFile): String {
+        val sep = LuaSettings.instance.importPathSeparator
+        val fileName = when {
+            child.isDirectory -> child.name
+            else              -> FileUtil.getNameWithoutExtension(child.name)
+        }
+        return if (importPath == null) fileName else "$importPath$sep$fileName"
     }
 
     internal class FullPackageInsertHandler : InsertHandler<LookupElement> {
@@ -96,7 +115,4 @@ class RequirePathCompletionProvider : LuaCompletionProvider() {
         }
     }
 
-    companion object {
-        private const val PATH_SPLITTER = '.'
-    }
 }
