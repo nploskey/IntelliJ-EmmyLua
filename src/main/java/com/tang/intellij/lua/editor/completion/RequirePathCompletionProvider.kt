@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.sanitizeFileName
 import com.tang.intellij.lua.lang.LuaFileType
 import com.tang.intellij.lua.lang.LuaIcons
 import com.tang.intellij.lua.lang.type.LuaString
@@ -85,15 +84,6 @@ class RequirePathCompletionProvider : LuaCompletionProvider() {
                 completionResultSet.addElement(PrioritizedLookupElement.withPriority(lookupElement, 1.0))
             }
         }
-    }
-
-    private fun newChildImportPath(importPath: String?, child: VirtualFile): String {
-        val sep = LuaSettings.instance.importPathSeparator
-        val fileName = when {
-            child.isDirectory -> child.name
-            else              -> FileUtil.getNameWithoutExtension(child.name)
-        }
-        return if (importPath == null) fileName else "$importPath$sep$fileName"
     }
 
     internal class FullPackageInsertHandler : InsertHandler<LookupElement> {
